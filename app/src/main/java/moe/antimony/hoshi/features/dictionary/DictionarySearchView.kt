@@ -622,6 +622,7 @@ internal fun DictionarySearchView(
             is ReaderLookupPopupBridgeMessage.SasayakiReplayCue,
             is ReaderLookupPopupBridgeMessage.SasayakiTogglePlayback,
             is ReaderLookupPopupBridgeMessage.SasayakiPlayForward,
+            is ReaderLookupPopupBridgeMessage.Kumapie,
             -> Unit
         }
     }

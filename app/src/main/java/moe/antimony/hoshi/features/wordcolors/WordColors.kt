@@ -27,6 +27,36 @@ internal object WordColors {
         }
         return out.toString()
     }
+
+    /**
+     * The popup's kumapie rating row: [bodyJson] `{action, word, reading, ease?, ms?, rated?}` goes to kumapie's provider
+     * `call` ("state", "rate", "undo", "reload"); answers `{state?, rated?: {notes, cards, undo}, undone?}`, or `null`
+     * when kumapie can't (not installed, no permission).
+     */
+    fun kumapie(context: Context, bodyJson: String): String = runCatching {
+        val body = JSONObject(bodyJson)
+        val extras = android.os.Bundle().apply {
+            putString("word", body.optString("word"))
+            putString("reading", body.optString("reading"))
+            putInt("ease", body.optInt("ease"))
+            putLong("ms", body.optLong("ms"))
+            body.optJSONObject("rated")?.let { r ->
+                val notes = r.getJSONArray("notes")
+                putLongArray("notes", LongArray(notes.length()) { notes.getLong(it) })
+                putInt("cards", r.getInt("cards"))
+                putString("undo", r.getString("undo"))
+            }
+        }
+        val out = context.contentResolver.call(Uri.parse("content://$Authority"), body.getString("action"), null, extras)
+            ?: return@runCatching "null"
+        JSONObject().apply {
+            out.getString("state")?.let { put("state", it) }
+            out.getLongArray("notes")?.let { notes ->
+                put("rated", JSONObject().put("notes", JSONArray(notes.toList())).put("cards", out.getInt("cards")).put("undo", out.getString("undo")))
+            }
+            if (out.containsKey("undone")) put("undone", out.getBoolean("undone"))
+        }.toString()
+    }.onFailure { Log.w("WordColors", "kumapie call failed", it) }.getOrDefault("null")
 }
 
 /** `window.HoshiWordColors.request(text)`: kumapie is asked off the UI thread, the answer goes to `hoshiWordColors.apply`. */

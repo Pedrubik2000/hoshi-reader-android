@@ -2002,6 +2002,69 @@ function duplicateStateForFormat(states, formatId) {
         : null;
 }
 
+// kumapie's rating row (its RatingRows): Again / Hard / Good / Easy for a word with its own kuma3 card, then Undo.
+// kumapie rates the word's cards (every one due today, else the first); only in the reader (other popups don't answer).
+const kumapieRatingColors = ['#FF6B6B', '#8A8696', '#7CC47F', '#6FA8FF'];
+
+async function kumapieRequest(body) {
+    try {
+        return await window.webkit?.messageHandlers?.kumapie?.postMessage(body);
+    } catch {
+        return null;
+    }
+}
+
+async function appendKumapieRatings(entryDiv, entry) {
+    if (!window.webkit?.messageHandlers?.kumapie) return;
+    const word = { word: entry.expression, reading: entry.reading || '' };
+    const state = (await kumapieRequest({ action: 'state', ...word }))?.state;
+    entryDiv.querySelector('.kumapie-ratings')?.remove();
+    if (!state || state === 'u') return;
+    const row = el('div', { className: 'kumapie-ratings' });
+    const header = entryDiv.querySelector('.entry-header');
+    if (header) header.after(row); else entryDiv.prepend(row);
+    const opened = Date.now();
+    const note = (text) => row.appendChild(el('span', { className: 'kumapie-said', textContent: text }));
+    const buttons = () => {
+        row.replaceChildren();
+        ['Again', 'Hard', 'Good', 'Easy'].forEach((label, i) => {
+            const button = el('button', { className: 'kumapie-rate', textContent: label });
+            button.style.background = kumapieRatingColors[i];
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                row.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+                const reply = await kumapieRequest({ action: 'rate', ...word, ease: i + 1, ms: Date.now() - opened });
+                if (reply?.rated) {
+                    answered(label, reply.rated);
+                } else {
+                    buttons();
+                    note("kuma3 didn't take the rating.");
+                }
+            });
+            row.appendChild(button);
+        });
+    };
+    const answered = (label, rated) => {
+        row.replaceChildren();
+        note(`Answered: ${label}`);
+        const undo = el('button', { className: 'kumapie-undo', textContent: 'Undo' });
+        undo.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            undo.disabled = true;
+            if ((await kumapieRequest({ action: 'undo', ...word, rated }))?.undone) {
+                buttons();
+            } else {
+                undo.remove();
+                note("kuma3 didn't undo it (something else was done there since?).");
+            }
+        });
+        row.appendChild(undo);
+    };
+    buttons();
+}
+
 async function mineEntryAtIndex(entryIndex, formatId, buttonsContainer = null) {
     const entry = window.lookupEntries?.[entryIndex];
     if (!entry) { return; }
@@ -2021,6 +2084,11 @@ async function mineEntryAtIndex(entryIndex, formatId, buttonsContainer = null) {
         return;
     }
     const checkDuplicate = () => refreshAnkiDuplicateStates(entryIndex, buttonsContainer);
+    // kumapie reads the new card (the page turns it blue), then the word gets its rating row.
+    kumapieRequest({ action: 'reload', word: expression, reading: reading || '' }).then(() => {
+        const entryDiv = document.querySelector(`.entry[data-entry-index="${entryIndex}"]`);
+        if (entryDiv) appendKumapieRatings(entryDiv, entry);
+    });
 
     if (window.useAnkiConnect) {
         await checkDuplicate();
@@ -2705,6 +2773,7 @@ window.renderPopup = function() {
                 'data-entry-index': idx,
             });
             entryDiv.appendChild(createEntryHeader(entry, idx));
+            appendKumapieRatings(entryDiv, entry);
 
             if (window.audioEnableAutoplay && window.audioSources?.length && idx === 0) {
                 playEntryAudio(idx);

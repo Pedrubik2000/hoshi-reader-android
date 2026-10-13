@@ -500,6 +500,7 @@ private fun ProcessTextLookupOverlay(
                 is ReaderLookupPopupBridgeMessage.SasayakiReplayCue,
                 is ReaderLookupPopupBridgeMessage.SasayakiTogglePlayback,
                 is ReaderLookupPopupBridgeMessage.SasayakiPlayForward,
+                is ReaderLookupPopupBridgeMessage.Kumapie,
                 -> Unit
             }
         }

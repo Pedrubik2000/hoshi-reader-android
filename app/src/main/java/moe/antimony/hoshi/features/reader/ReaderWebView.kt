@@ -827,6 +827,18 @@ fun ReaderWebView(
                     replyReaderPopupMessage(message.popupId, message.messageId ?: return@duplicateStatesAsync, readerPopupBooleanMapJson(states))
                 }
             }
+            is ReaderLookupPopupBridgeMessage.Kumapie -> {
+                val appContext = context.applicationContext
+                Thread {
+                    val reply = moe.antimony.hoshi.features.wordcolors.WordColors.kumapie(appContext, message.bodyJson)
+                    // A rating, an Undo or a mined card changes the word's colour: colour the page again.
+                    val recolour = !message.bodyJson.contains("\"action\":\"state\"")
+                    webView?.post {
+                        replyReaderPopupMessage(message.popupId, message.messageId, reply)
+                        if (recolour) webView?.evaluateJavascript("window.hoshiWordColors && window.hoshiWordColors.request();", null)
+                    }
+                }.start()
+            }
             is ReaderLookupPopupBridgeMessage.ShowNotes -> {
                 ankiViewModel.showNotesAsync(message.formatId, message.valuesByHandlebar) { shown ->
                     replyReaderPopupMessage(message.popupId, message.messageId ?: return@showNotesAsync, shown.toString())

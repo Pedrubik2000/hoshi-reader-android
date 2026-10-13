@@ -246,6 +246,13 @@ internal sealed class ReaderLookupPopupBridgeMessage {
         val valuesByHandlebar: Map<String, String>,
     ) : ReaderLookupPopupBridgeMessage()
 
+    /** kumapie's rating row (WordColors.kumapie): [bodyJson] is {action, word, reading, ...}. */
+    data class Kumapie(
+        override val popupId: String,
+        override val messageId: String,
+        val bodyJson: String,
+    ) : ReaderLookupPopupBridgeMessage()
+
     data class ShowNotes(
         override val popupId: String,
         override val messageId: String?,
@@ -365,6 +372,11 @@ internal sealed class ReaderLookupPopupBridgeMessage {
                     popupId = popupId,
                     messageId = messageId ?: return null,
                     valuesByHandlebar = payload.obj("body")?.stringMap() ?: return null,
+                )
+                "kumapie" -> Kumapie(
+                    popupId = popupId,
+                    messageId = messageId ?: return null,
+                    bodyJson = payload.obj("body")?.toString() ?: return null,
                 )
                 "showNotes" -> {
                     val body = payload.obj("body") ?: return null

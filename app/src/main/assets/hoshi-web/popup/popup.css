@@ -654,3 +654,10 @@ html[data-hoshi-eink-mode="true"] .pronunciation-nasal-indicator {
         background: var(--background-color-dark1, #222);
     }
 }
+
+/* kumapie's rating row (popup.js appendKumapieRatings): filled buttons, the entry's whole width. */
+.kumapie-ratings { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 6px; }
+.kumapie-rate { flex: 1; border: 0; border-radius: 8px; padding: 6px 4px; color: #1E1B26; font-size: 14px; }
+.kumapie-rate:disabled { opacity: 0.5; }
+.kumapie-undo { border: 0; background: none; color: var(--accent-color); font-size: 14px; }
+.kumapie-said { color: var(--text-color-light3); font-size: 13px; }
