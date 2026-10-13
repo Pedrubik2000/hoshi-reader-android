@@ -21,6 +21,7 @@ internal data class ReaderWebAssets(
     val readerVnSelectionProjectionJs: String,
     val readerSasayakiJs: String,
     val highlightsJs: String,
+    val wordColorsJs: String,
     val readerCss: String,
 ) {
     companion object {
@@ -51,6 +52,7 @@ internal data class ReaderWebAssets(
                 readerVnSelectionProjectionJs = context.readAsset("hoshi-web/reader/reader-vn-selection-projection.js"),
                 readerSasayakiJs = context.readAsset("hoshi-web/reader/reader-sasayaki.js"),
                 highlightsJs = context.readAsset("hoshi-web/reader/highlights.js"),
+                wordColorsJs = context.readAsset("hoshi-web/reader/word-colors.js"),
                 readerCss = context.readAsset("hoshi-web/reader/reader.css"),
             )
 

@@ -9,10 +9,17 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <!-- AnkiDroid builds, kuma3 first: keep in step with AnkiDroidPackages. -->
+    <uses-permission android:name="io.github.pedrubik2000.kuma3.permission.READ_WRITE_DATABASE" />
+    <uses-permission android:name="com.ichi2.anki.debug.permission.READ_WRITE_DATABASE" />
     <uses-permission android:name="com.ichi2.anki.permission.READ_WRITE_DATABASE" />
 
     <queries>
+        <package android:name="io.github.pedrubik2000.kuma3" />
+        <package android:name="com.ichi2.anki.debug" />
         <package android:name="com.ichi2.anki" />
+        <provider android:authorities="io.github.pedrubik2000.kuma3.flashcards" />
+        <provider android:authorities="com.ichi2.anki.debug.flashcards" />
         <provider android:authorities="com.ichi2.anki.flashcards" />
     </queries>
 

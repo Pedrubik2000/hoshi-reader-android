@@ -2,6 +2,16 @@ package moe.antimony.hoshi.features.anki
 
 object AnkiFieldTemplates {
     private val templates = mapOf(
+        // kuma3's Japanese note type, filled as kumapie mines books (word bolded, Word as `語[ご]` for the colours).
+        "🐻 Japanese" to mapOf(
+            "Sentence" to "{cloze-prefix}<b>{cloze-body}</b>{cloze-suffix}",
+            "Sentence Audio" to "{sasayaki-audio}",
+            "Word" to "{furigana-plain}",
+            "Word Audio" to "{audio}",
+            "Definition (bilingual)" to "{glossary-first}",
+            "Image" to "{book-cover}",
+            "Context" to "Mined in Hoshi: {document-title}",
+        ),
         "Lapis" to mapOf(
             "Expression" to "{expression}",
             "ExpressionFurigana" to "{furigana-plain}",

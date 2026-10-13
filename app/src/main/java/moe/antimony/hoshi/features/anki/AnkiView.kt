@@ -113,12 +113,12 @@ fun AnkiView(
                 isAnkiDroidAvailable = viewModel.isAnkiDroidAvailable(),
                 permissionGranted = ContextCompat.checkSelfPermission(
                     context,
-                    AnkiDroidReadWritePermission,
+                    AnkiDroidPackages.permission(context),
                 ) == PackageManager.PERMISSION_GRANTED,
             )
         ) {
             AnkiFetchAction.FetchConfiguration -> viewModel.fetchConfiguration()
-            AnkiFetchAction.RequestPermission -> permissionLauncher.launch(AnkiDroidReadWritePermission)
+            AnkiFetchAction.RequestPermission -> permissionLauncher.launch(AnkiDroidPackages.permission(context))
             AnkiFetchAction.ShowApiUnavailable -> viewModel.showFetchApiUnavailable()
         }
     }
@@ -918,4 +918,3 @@ internal object AnkiHandlebarOptions {
             }
 }
 
-private const val AnkiDroidReadWritePermission = "com.ichi2.anki.permission.READ_WRITE_DATABASE"

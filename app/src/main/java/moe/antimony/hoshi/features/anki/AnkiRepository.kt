@@ -414,7 +414,7 @@ internal class AnkiRepository(
                 return@runCatching activeBackend.addMediaFromBytes(file.readBytes(), preferredName, mimeType)
             }
             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-            context.grantUriPermission("com.ichi2.anki", uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.grantUriPermission(AnkiDroidPackages.resolve(context) ?: "com.ichi2.anki", uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             activeBackend.addMediaFromUri(uri.toString(), preferredName, mimeType)
         }
             .onFailure { Log.w(TAG, "Failed to add Anki media $preferredName", it) }

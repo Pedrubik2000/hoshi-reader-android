@@ -1,13 +1,12 @@
 package moe.antimony.hoshi.features.anki
 
 import android.content.ActivityNotFoundException
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import com.ichi2.anki.FlashCardsContract
-import com.ichi2.anki.api.AddContentApi
 import java.lang.SecurityException
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
@@ -21,22 +20,31 @@ class AndroidAnkiContentApi @Inject constructor(
     context: Context,
 ) : AnkiContentApi {
     private val appContext = context.applicationContext
-    private val api = AddContentApi(appContext)
+    private val resolver get() = appContext.contentResolver
+
+    /** The installed AnkiDroid build to mine into: kuma3 first ([AnkiDroidPackages]). */
+    private val pkg: String get() = AnkiDroidPackages.resolve(appContext) ?: "com.ichi2.anki"
+    private fun uri(path: String): Uri = Uri.parse("content://$pkg.flashcards/$path")
 
     override fun deckList(): Map<Long, String> =
         readAnkiApi(AnkiFetchFailure.DeckListUnavailable) {
-            api.deckList ?: throw AnkiFetchException(AnkiFetchFailure.DeckListUnavailable)
+            resolver.query(uri("decks"), arrayOf("deck_id", "deck_name"), null, null, null)?.use { c ->
+                buildMap { while (c.moveToNext()) put(c.getLong(0), c.getString(1)) }
+            } ?: throw AnkiFetchException(AnkiFetchFailure.DeckListUnavailable)
         }
 
     override fun modelList(): Map<Long, String> =
         readAnkiApi(AnkiFetchFailure.ModelListUnavailable) {
-            api.modelList ?: throw AnkiFetchException(AnkiFetchFailure.ModelListUnavailable)
+            resolver.query(uri("models"), arrayOf("_id", "name"), null, null, null)?.use { c ->
+                buildMap { while (c.moveToNext()) put(c.getLong(0), c.getString(1)) }
+            } ?: throw AnkiFetchException(AnkiFetchFailure.ModelListUnavailable)
         }
 
     override fun fieldList(modelId: Long): List<String> =
         readAnkiApi(AnkiFetchFailure.ModelFieldsUnavailable) {
-            api.getFieldList(modelId)?.toList()
-                ?: throw AnkiFetchException(AnkiFetchFailure.ModelFieldsUnavailable)
+            resolver.query(uri("models/$modelId"), arrayOf("field_names"), null, null, null)?.use { c ->
+                if (c.moveToFirst()) c.getString(0).split(FieldSeparator) else null
+            } ?: throw AnkiFetchException(AnkiFetchFailure.ModelFieldsUnavailable)
         }
 
     override fun findDuplicateNotes(
@@ -54,9 +62,9 @@ class AndroidAnkiContentApi @Inject constructor(
             selectedDeck = deck,
             duplicateScope = duplicateScope,
         )
-        val cursor = appContext.contentResolver.query(
-            FlashCardsContract.Note.CONTENT_URI_V2,
-            NoteProjection,
+        val cursor = resolver.query(
+            uri("notes_v2"),
+            arrayOf("_id", "csum"),
             ankiDuplicateNoteSelection(
                 modelId = modelId,
                 checksum = checksum,
@@ -69,8 +77,7 @@ class AndroidAnkiContentApi @Inject constructor(
         cursor.use {
             while (it.moveToNext()) {
                 if (duplicateScope == AnkiDuplicateScope.Collection) return true
-                val noteId = it.getLong(it.getColumnIndexOrThrow(FlashCardsContract.Note._ID))
-                if (noteHasCardInDeck(noteId, scopeDeckIds)) return true
+                if (noteHasCardInDeck(it.getLong(0), scopeDeckIds)) return true
             }
         }
         return false
@@ -81,18 +88,36 @@ class AndroidAnkiContentApi @Inject constructor(
         deckId: Long,
         fields: Array<String>,
         tags: Set<String>,
-    ): Long? = api.addNote(modelId, deckId, fields, tags)
+    ): Long? {
+        val noteUri = resolver.insert(uri("notes"), ContentValues().apply {
+            put("mid", modelId)
+            put("flds", fields.joinToString(FieldSeparator))
+            put("tags", tags.joinToString(" "))
+        }) ?: return null
+        val noteId = noteUri.lastPathSegment?.toLongOrNull() ?: return null
+        // New cards land in the note type's last deck; move them, as AnkiDroid's AddContentApi does.
+        val ords = resolver.query(uri("notes/$noteId/cards"), arrayOf("ord"), null, null, null)?.use { c ->
+            buildList { while (c.moveToNext()) add(c.getInt(0)) }
+        }.orEmpty()
+        ords.forEach { ord ->
+            resolver.update(uri("notes/$noteId/cards/$ord"), ContentValues().apply { put("deck_id", deckId) }, null, null)
+        }
+        return noteId
+    }
 
-    override fun addMediaFromUri(uriString: String, preferredName: String, mimeType: String): String? =
-        api.addMediaFromUri(
-            Uri.parse(uriString),
-            ankiPreferredMediaName(preferredName),
-            if (mimeType.startsWith("audio/")) "audio" else "image",
-        )
+    override fun addMediaFromUri(uriString: String, preferredName: String, mimeType: String): String? {
+        val added = resolver.insert(uri("media"), ContentValues().apply {
+            put("file_uri", uriString)
+            put("preferred_name", ankiPreferredMediaName(preferredName))
+        }) ?: return null
+        val name = added.lastPathSegment ?: return null
+        // Same text AnkiDroid's AddContentApi answers.
+        return if (mimeType.startsWith("audio/")) "[sound:$name]" else "<img src=\"$name\" />"
+    }
 
     override fun sync(): Boolean =
         runCatching {
-            appContext.startActivity(ankiDroidSyncIntent())
+            appContext.startActivity(ankiDroidSyncIntent(pkg))
             true
         }.recoverCatching { error ->
             when (error) {
@@ -106,7 +131,7 @@ class AndroidAnkiContentApi @Inject constructor(
         runCatching {
             val spec = ankiDroidBrowserIntentSpec(
                 query = query,
-                packageName = AddContentApi.getAnkiDroidPackageName(appContext) ?: "com.ichi2.anki",
+                packageName = pkg,
             )
             appContext.startActivity(
                 Intent().apply {
@@ -123,7 +148,7 @@ class AndroidAnkiContentApi @Inject constructor(
         }.getOrDefault(false)
 
     override fun isAvailable(): Boolean =
-        AddContentApi.getAnkiDroidPackageName(appContext) != null
+        AnkiDroidPackages.resolve(appContext) != null
 
     private inline fun <T> readAnkiApi(fallbackFailure: AnkiFetchFailure, block: () -> T): T {
         if (!isAvailable()) throw AnkiFetchException(AnkiFetchFailure.ApiUnavailable)
@@ -142,37 +167,42 @@ class AndroidAnkiContentApi @Inject constructor(
 
     private fun noteHasCardInDeck(noteId: Long, deckIds: Set<Long>): Boolean {
         if (deckIds.isEmpty()) return false
-        val noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, noteId.toString())
-        val cardUri = Uri.withAppendedPath(noteUri, "cards")
-        val cursor = appContext.contentResolver.query(
-            cardUri,
-            CardProjection,
-            null,
-            null,
-            null,
-        ) ?: return false
-
+        val cursor = resolver.query(uri("notes/$noteId/cards"), arrayOf("deck_id"), null, null, null) ?: return false
         cursor.use {
             while (it.moveToNext()) {
-                val cardDeckId = it.getLong(it.getColumnIndexOrThrow(FlashCardsContract.Card.DECK_ID))
-                if (cardDeckId in deckIds) return true
+                if (it.getLong(0) in deckIds) return true
             }
         }
         return false
     }
 
     private companion object {
-        val NoteProjection = arrayOf(FlashCardsContract.Note._ID, FlashCardsContract.Note.CSUM)
-        val CardProjection = arrayOf(FlashCardsContract.Card.DECK_ID)
+        const val FieldSeparator = "\u001f"
     }
+}
+
+/**
+ * AnkiDroid builds Hoshi can mine into, in order of preference: kuma3 Anki, its debug build, Play Store AnkiDroid.
+ * Each has its own provider (`<package>.flashcards`) and permission. Keep in step with the manifest.
+ */
+internal object AnkiDroidPackages {
+    val All = listOf("io.github.pedrubik2000.kuma3", "com.ichi2.anki.debug", "com.ichi2.anki")
+
+    fun resolve(context: Context): String? =
+        All.firstOrNull { context.packageManager.resolveContentProvider("$it.flashcards", 0) != null }
+
+    fun permission(packageName: String) = "$packageName.permission.READ_WRITE_DATABASE"
+
+    /** The permission to ask for: the installed build's, else Play Store AnkiDroid's. */
+    fun permission(context: Context) = permission(resolve(context) ?: "com.ichi2.anki")
 }
 
 private fun logAnkiApiFailure(message: String, error: Throwable) {
     runCatching { Log.w("AndroidAnkiContentApi", message, error) }
 }
 
-internal fun ankiDroidSyncIntent(): Intent =
-    ankiDroidSyncIntentSpec().let { spec ->
+internal fun ankiDroidSyncIntent(packageName: String = "com.ichi2.anki"): Intent =
+    ankiDroidSyncIntentSpec(packageName).let { spec ->
         Intent(spec.action).apply {
             setPackage(spec.packageName)
             spec.categories.forEach(::addCategory)
@@ -187,10 +217,10 @@ internal data class AnkiDroidSyncIntentSpec(
     val flags: Int,
 )
 
-internal fun ankiDroidSyncIntentSpec(): AnkiDroidSyncIntentSpec =
+internal fun ankiDroidSyncIntentSpec(packageName: String = "com.ichi2.anki"): AnkiDroidSyncIntentSpec =
     AnkiDroidSyncIntentSpec(
         action = "com.ichi2.anki.DO_SYNC",
-        packageName = "com.ichi2.anki",
+        packageName = packageName,
         categories = setOf(Intent.CATEGORY_DEFAULT),
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or
             Intent.FLAG_ACTIVITY_NO_HISTORY or
@@ -228,7 +258,7 @@ internal fun ankiDuplicateNoteSelection(
     val checksumSelection = String.format(
         Locale.US,
         "%s in (%d)",
-        FlashCardsContract.Note.CSUM,
+        "csum",
         checksum,
     )
     return if (checkAllModels) {
@@ -237,7 +267,7 @@ internal fun ankiDuplicateNoteSelection(
         String.format(
             Locale.US,
             "%s=%d and %s",
-            FlashCardsContract.Note.MID,
+            "mid",
             modelId,
             checksumSelection,
         )
