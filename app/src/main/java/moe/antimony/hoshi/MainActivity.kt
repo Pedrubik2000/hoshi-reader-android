@@ -91,6 +91,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        moe.antimony.hoshi.features.wordcolors.WordColors.warmUp(applicationContext)
+    }
+
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (readerKeyEventHandler?.invoke(event) == true) {

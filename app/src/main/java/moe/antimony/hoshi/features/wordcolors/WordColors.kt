@@ -28,6 +28,11 @@ internal object WordColors {
         return out.toString()
     }
 
+    /** Loads kumapie's splitter (~7 s when its process is cold) before a book asks for colours. */
+    fun warmUp(context: Context) {
+        Thread { runCatching { runs(context, "日本語") } }.start()
+    }
+
     /**
      * The popup's kumapie rating row: [bodyJson] `{action, word, reading, ease?, ms?, rated?}` goes to kumapie's provider
      * `call` ("state", "rate", "undo", "reload"); answers `{state?, rated?: {notes, cards, undo}, undone?}`, or `null`
