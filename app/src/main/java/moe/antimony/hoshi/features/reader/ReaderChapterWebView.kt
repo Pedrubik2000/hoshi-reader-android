@@ -927,7 +927,7 @@ private fun readerSetupScript(
         restoreToken = restoreToken,
         assets = assets,
     ).scriptTagBody()
-    // kuma3 word colours; VN mode renders clones of the source text, so it has none.
+    // kumapie word colours; VN mode renders clones of the source text, so it has none.
     val wordColorsScript = if (settings.viewMode == ReaderViewMode.VisualNovel || settings.eInkMode) {
         ""
     } else {

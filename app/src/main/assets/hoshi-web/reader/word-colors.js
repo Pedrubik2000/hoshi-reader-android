@@ -1,4 +1,4 @@
-// kuma3 word colours (kumapie's): Kotlin splits the chapter text into words and answers [start, length, state]
+// kumapie word colours: kumapie splits the chapter text into words and answers [start, length, state]
 // runs (UTF-16 offsets into the reader's text nodes, furigana skipped); they are painted with CSS highlights, so the
 // DOM, raw offsets and layout stay untouched.
 window.hoshiWordColors = {
