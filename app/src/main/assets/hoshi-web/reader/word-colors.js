@@ -16,6 +16,24 @@ window.hoshiWordColors = {
     if (text !== this.text) return; // an older page's answer
     this.runs = runs;
     this.paint();
+    this.splitNext();
+  },
+  // The next chapter's text, read as request() reads this one, goes to kumapie to be split while this one is read.
+  splitNext: function() {
+    if (this.splitAhead || !window.HoshiWordColors.next) return;
+    this.splitAhead = true;
+    var href = window.HoshiWordColors.next();
+    if (!href) return;
+    fetch('https://appassets.androidplatform.net/epub/' + href).then(function(r) { return r.text(); }).then(function(html) {
+      var doc = new DOMParser().parseFromString(html, 'application/xhtml+xml');
+      if (doc.getElementsByTagName('parsererror').length) doc = new DOMParser().parseFromString(html, 'text/html');
+      if (!doc.body) return;
+      var text = '';
+      var walker = window.hoshiReader.createWalker(doc.body);
+      var node;
+      while ((node = walker.nextNode())) text += node.textContent;
+      if (text) window.HoshiWordColors.split(text);
+    }).catch(function() {});
   },
   paint: function() {
     if (!this.runs || typeof CSS === 'undefined' || !CSS.highlights || typeof Highlight === 'undefined') return;

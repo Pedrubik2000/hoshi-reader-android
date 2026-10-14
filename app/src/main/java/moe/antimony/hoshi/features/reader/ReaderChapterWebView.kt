@@ -136,6 +136,7 @@ internal fun ChapterWebView(
     }
     val continuousScrollProgressScheduler = remember { ReaderContinuousScrollProgressScheduler() }
     val chapter = book.chapters[chapterPosition.index]
+    val nextChapterHref = rememberUpdatedState(book.chapters.getOrNull(chapterPosition.index + 1)?.href)
     var readerWebView by remember { mutableStateOf<WebView?>(null) }
     val fontLibraryState by fontManager.libraryState.collectAsState()
     val fontRenderSpec = remember(
@@ -290,7 +291,7 @@ internal fun ChapterWebView(
                     "HoshiReaderImage",
                 )
                 addJavascriptInterface(
-                    moe.antimony.hoshi.features.wordcolors.ReaderWordColorsBridge(this),
+                    moe.antimony.hoshi.features.wordcolors.ReaderWordColorsBridge(this) { nextChapterHref.value },
                     "HoshiWordColors",
                 )
                 ReaderLookupPopupWebBridge.install(this, readerPopupBridgeHolder, isActive = { !isReleased })

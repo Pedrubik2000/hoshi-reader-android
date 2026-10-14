@@ -28,6 +28,13 @@ internal object WordColors {
         return out.toString()
     }
 
+    /** Has kumapie split [text] (the next chapter) into its cache, so its colours come at once when it opens. */
+    fun split(context: Context, text: String) {
+        val extras = android.os.Bundle().apply { putString("text", text) }
+        runCatching { context.contentResolver.call(Uri.parse("content://$Authority"), "split", null, extras) }
+            .onFailure { Log.w("WordColors", "kumapie split failed", it) }
+    }
+
     /** Loads kumapie's splitter (~7 s when its process is cold) before a book asks for colours. */
     fun warmUp(context: Context) {
         Thread { runCatching { runs(context, "日本語") } }.start()
@@ -64,9 +71,20 @@ internal object WordColors {
     }.onFailure { Log.w("WordColors", "kumapie call failed", it) }.getOrDefault("null")
 }
 
-/** `window.HoshiWordColors.request(text)`: kumapie is asked off the UI thread, the answer goes to `hoshiWordColors.apply`. */
-internal class ReaderWordColorsBridge(private val webView: WebView) {
+/**
+ * `window.HoshiWordColors.request(text)`: kumapie is asked off the UI thread, the answer goes to `hoshiWordColors.apply`.
+ * `next()` is the next chapter's href ("" at the end), `split(text)` has kumapie split it ahead.
+ */
+internal class ReaderWordColorsBridge(private val webView: WebView, private val nextChapterHref: () -> String?) {
     private val context = webView.context.applicationContext
+
+    @JavascriptInterface
+    fun next(): String = nextChapterHref().orEmpty()
+
+    @JavascriptInterface
+    fun split(text: String) {
+        Thread { WordColors.split(context, text) }.start()
+    }
 
     @JavascriptInterface
     fun request(text: String) {
