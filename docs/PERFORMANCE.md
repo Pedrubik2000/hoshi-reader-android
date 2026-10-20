@@ -57,6 +57,11 @@ Use controls before implementation. Common Reader controls:
 For debuggable builds, Chrome DevTools Protocol is the fastest way to measure
 Reader WebView timing and JavaScript hotspots.
 
+The debug build type (Hoshi Debug) is not debuggable: it runs optimized like
+release and is only profileable (`app/build.gradle.kts`). CDP, `run-as` and
+`BuildConfig.DEBUG` markers need a temporary `isDebuggable = true` build; do
+not compare its timings with the usual Hoshi Debug.
+
 ```bash
 SERIAL=<serial>
 PACKAGE=moe.antimony.hoshi.debug

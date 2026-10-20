@@ -94,6 +94,16 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             manifestPlaceholders["appLabel"] = "Hoshi Debug"
+            // Hoshi Debug is the build read with every day, so it runs optimized like release: ART runs debuggable
+            // apps (framework code included) unoptimized, and AGP compiles C++ at -O0 for build types named debug.
+            // It keeps the debug app id and key, so it installs over itself and keeps its data; profileable from
+            // src/debug/AndroidManifest.xml.
+            isDebuggable = false
+            externalNativeBuild {
+                cmake {
+                    arguments += "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+                }
+            }
             ndk {
                 abiFilters += listOf("arm64-v8a", "x86_64")
             }
@@ -272,6 +282,8 @@ val buildRustAndroidDebug by tasks.registering(Exec::class) {
         rustDebugJniLibsDir.absolutePath,
         "build",
         "--lib",
+        // Optimized like the debug build type's C++ (see buildTypes.debug).
+        "--release",
     )
 }
 
