@@ -28,6 +28,27 @@ internal object WordColors {
         return out.toString()
     }
 
+    /**
+     * The characters' names in [text] that have a picture in kumapie's character dictionary, as its subtitles show them:
+     * JSON `{runs: [[start, name], ...], pictures: {name: data URI}}`.
+     */
+    fun faces(context: Context, text: String): String {
+        val runs = JSONArray()
+        val pictures = JSONObject()
+        context.contentResolver.query(Uri.parse("content://$Authority/faces"), null, null, arrayOf(text), null)?.use { c ->
+            while (c.moveToNext()) {
+                val name = c.getString(2)
+                if (!pictures.has(name)) {
+                    val bytes = context.contentResolver.openInputStream(Uri.parse("content://$Authority/face?name=" + Uri.encode(name)))
+                        ?.use { it.readBytes() } ?: continue
+                    pictures.put(name, "data:image/jpeg;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP))
+                }
+                runs.put(JSONArray().put(c.getInt(0)).put(name))
+            }
+        }
+        return JSONObject().put("runs", runs).put("pictures", pictures).toString()
+    }
+
     /** Has kumapie split [text] (the next chapter) into its cache, so its colours come at once when it opens. */
     fun split(context: Context, text: String) {
         val extras = android.os.Bundle().apply { putString("text", text) }
@@ -94,6 +115,9 @@ internal class ReaderWordColorsBridge(private val webView: WebView, private val 
                 .getOrNull() ?: return@Thread
             val literal = JSONObject.quote(text)
             webView.post { webView.evaluateJavascript("window.hoshiWordColors && window.hoshiWordColors.apply($literal, $runs);", null) }
+            // After the colours (kumapie has the split by now); none with an older kumapie or no character dictionary.
+            val faces = runCatching { WordColors.faces(context, text) }.getOrNull() ?: return@Thread
+            webView.post { webView.evaluateJavascript("window.hoshiWordColors && window.hoshiWordColors.applyFaces($literal, $faces);", null) }
         }.start()
     }
 }

@@ -18,6 +18,39 @@ window.hoshiWordColors = {
     this.paint();
     this.splitNext();
   },
+  // A character's face beside their name's first letter (kumapie's character dictionary). A span with no size holds the
+  // picture, so the text's layout, pages and offsets stay as they were; the picture sits in the gap between lines
+  // (left of a vertical line, under a horizontal one: furigana are on the other side).
+  applyFaces: function(text, faces) {
+    if (text !== this.text || this.facesDone || !faces.runs.length) return;
+    this.facesDone = true;
+    var nodes = [];
+    var starts = [];
+    var cursor = 0;
+    var walker = window.hoshiReader.createWalker();
+    var node;
+    while ((node = walker.nextNode())) {
+      nodes.push(node);
+      starts.push(cursor);
+      cursor += node.textContent.length;
+    }
+    // Last name first: splitting a text node leaves the offsets before it as they were.
+    var n = nodes.length - 1;
+    for (var i = faces.runs.length - 1; i >= 0; i--) {
+      var start = faces.runs[i][0];
+      while (n > 0 && starts[n] > start) n--;
+      var at = start - starts[n];
+      if (at < 0 || at >= nodes[n].textContent.length) continue;
+      var rest = at > 0 ? nodes[n].splitText(at) : nodes[n];
+      var span = document.createElement('span');
+      span.className = 'hoshi-face';
+      var img = document.createElement('img');
+      img.src = faces.pictures[faces.runs[i][1]];
+      span.appendChild(img);
+      rest.parentNode.insertBefore(span, rest);
+    }
+    window.hoshiReader.buildNodeOffsets(); // the text nodes changed (this repaints the colours too)
+  },
   // The next chapter's text, read as request() reads this one, goes to kumapie to be split while this one is read.
   splitNext: function() {
     if (this.splitAhead || !window.HoshiWordColors.next) return;
@@ -75,6 +108,11 @@ window.hoshiWordColors = {
     style.textContent = dark
       ? '::highlight(hoshi-word-u){color:#FF6B6B}::highlight(hoshi-word-d){color:#7CC47F}::highlight(hoshi-word-b){color:#6FA8FF}'
       : '::highlight(hoshi-word-u){color:#D32F2F}::highlight(hoshi-word-d){color:#2E7D32}::highlight(hoshi-word-b){color:#1565C0}';
+    var vertical = window.hoshiReader.isVertical && window.hoshiReader.isVertical();
+    style.textContent += '.hoshi-face{display:inline!important;position:relative!important;margin:0!important;padding:0!important}'
+      + '.hoshi-face>img{position:absolute!important;width:.62em!important;height:.62em!important;max-width:none!important;'
+      + 'min-width:0!important;margin:0!important;border-radius:50%;object-fit:cover;object-position:top;pointer-events:none;'
+      + (vertical ? 'right:100%;top:.19em}' : 'top:100%;left:.19em}');
     document.head.appendChild(style);
     // Highlight wrapping moves text nodes and breaks live ranges: repaint after each rebuild (the text is unchanged).
     var self = this;
