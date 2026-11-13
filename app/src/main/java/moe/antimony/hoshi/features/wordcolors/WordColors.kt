@@ -30,16 +30,17 @@ internal object WordColors {
 
     /**
      * The characters' names in [text] that have a picture in kumapie's character dictionary, as its subtitles show them:
-     * JSON `{runs: [[start, name], ...], pictures: {name: data URI}}`.
+     * JSON `{runs: [[start, name], ...], pictures: {name: data URI}}`. Only [title]'s characters (the book's: the bear
+     * クマ in くまクマ熊ベアー got another show's クマ); a kumapie that doesn't know titles ignores it.
      */
-    fun faces(context: Context, text: String): String {
+    fun faces(context: Context, text: String, title: String): String {
         val runs = JSONArray()
         val pictures = JSONObject()
-        context.contentResolver.query(Uri.parse("content://$Authority/faces"), null, null, arrayOf(text), null)?.use { c ->
+        context.contentResolver.query(Uri.parse("content://$Authority/faces"), null, null, arrayOf(text, title), null)?.use { c ->
             while (c.moveToNext()) {
                 val name = c.getString(2)
                 if (!pictures.has(name)) {
-                    val bytes = context.contentResolver.openInputStream(Uri.parse("content://$Authority/face?name=" + Uri.encode(name)))
+                    val bytes = context.contentResolver.openInputStream(Uri.parse("content://$Authority/face?name=" + Uri.encode(name) + "&work=" + Uri.encode(title)))
                         ?.use { it.readBytes() } ?: continue
                     pictures.put(name, "data:image/jpeg;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP))
                 }
@@ -96,7 +97,11 @@ internal object WordColors {
  * `window.HoshiWordColors.request(text)`: kumapie is asked off the UI thread, the answer goes to `hoshiWordColors.apply`.
  * `next()` is the next chapter's href ("" at the end), `split(text)` has kumapie split it ahead.
  */
-internal class ReaderWordColorsBridge(private val webView: WebView, private val nextChapterHref: () -> String?) {
+internal class ReaderWordColorsBridge(
+    private val webView: WebView,
+    private val bookTitle: () -> String,
+    private val nextChapterHref: () -> String?,
+) {
     private val context = webView.context.applicationContext
 
     @JavascriptInterface
@@ -116,7 +121,7 @@ internal class ReaderWordColorsBridge(private val webView: WebView, private val 
             val literal = JSONObject.quote(text)
             webView.post { webView.evaluateJavascript("window.hoshiWordColors && window.hoshiWordColors.apply($literal, $runs);", null) }
             // After the colours (kumapie has the split by now); none with an older kumapie or no character dictionary.
-            val faces = runCatching { WordColors.faces(context, text) }.getOrNull() ?: return@Thread
+            val faces = runCatching { WordColors.faces(context, text, bookTitle()) }.getOrNull() ?: return@Thread
             webView.post { webView.evaluateJavascript("window.hoshiWordColors && window.hoshiWordColors.applyFaces($literal, $faces);", null) }
         }.start()
     }
