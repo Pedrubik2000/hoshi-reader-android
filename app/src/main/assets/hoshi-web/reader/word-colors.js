@@ -111,7 +111,10 @@ window.hoshiWordColors = {
     style.textContent += '.hoshi-face{display:inline-block!important;width:1em!important;height:1em!important;margin:0!important;'
       + 'padding:0!important;vertical-align:middle!important;line-height:0!important}'
       + '.hoshi-face>img{display:block!important;width:1em!important;height:1em!important;max-width:none!important;'
-      + 'min-width:0!important;margin:0!important;border-radius:50%;object-fit:cover;object-position:top;pointer-events:none}';
+      + 'min-width:0!important;margin:0!important;border-radius:50%;object-fit:cover;object-position:top;pointer-events:none}'
+      // Vertical text: "middle" sat ~.2em right of the column's centre (tablet, 2026-11-14); a shift moves the picture
+      // only, not the layout. ponytail: measured by eye on one font; retune if another font is off.
+      + (window.hoshiReader.isVertical && window.hoshiReader.isVertical() ? '.hoshi-face>img{transform:translateX(-.2em)}' : '');
     document.head.appendChild(style);
     // Highlight wrapping moves text nodes and breaks live ranges: repaint after each rebuild (the text is unchanged).
     var self = this;
