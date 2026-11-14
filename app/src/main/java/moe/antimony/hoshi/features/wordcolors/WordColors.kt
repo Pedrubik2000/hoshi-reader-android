@@ -44,7 +44,7 @@ internal object WordColors {
                         ?.use { it.readBytes() } ?: continue
                     pictures.put(name, "data:image/jpeg;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP))
                 }
-                runs.put(JSONArray().put(c.getInt(0) + c.getInt(1)).put(name)) // where the name ends: the face goes after it (user, 2026-11-14)
+                runs.put(JSONArray().put(c.getInt(0)).put(name)) // where the name starts: the face goes before it (user, 2026-11-14)
             }
         }
         return JSONObject().put("runs", runs).put("pictures", pictures).toString()

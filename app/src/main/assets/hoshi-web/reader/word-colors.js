@@ -18,8 +18,8 @@ window.hoshiWordColors = {
     this.paint();
     this.splitNext();
   },
-  // A character's face right after their name, in the line (kumapie's character dictionary; user, 2026-11-14: in the
-  // line, not beside it). A run's offset is where the name ends. The picture takes one letter's room; the text's
+  // A character's face right before their name, in the line (kumapie's character dictionary; user, 2026-11-14: in the
+  // line, before the name). A run's offset is where the name starts. The picture takes one letter's room; the text's
   // offsets are unchanged (an image has no text).
   applyFaces: function(text, faces) {
     if (text !== this.text || this.facesDone || !faces.runs.length) return;
