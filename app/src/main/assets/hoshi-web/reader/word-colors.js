@@ -18,9 +18,9 @@ window.hoshiWordColors = {
     this.paint();
     this.splitNext();
   },
-  // A character's face beside their name's first letter (kumapie's character dictionary). A span with no size holds the
-  // picture, so the text's layout, pages and offsets stay as they were; the picture sits in the gap between lines
-  // (left of a vertical line, under a horizontal one: furigana are on the other side).
+  // A character's face right after their name, in the line (kumapie's character dictionary; user, 2026-11-14: in the
+  // line, not beside it). A run's offset is where the name ends. The picture takes one letter's room; the text's
+  // offsets are unchanged (an image has no text).
   applyFaces: function(text, faces) {
     if (text !== this.text || this.facesDone || !faces.runs.length) return;
     this.facesDone = true;
@@ -40,7 +40,7 @@ window.hoshiWordColors = {
       var start = faces.runs[i][0];
       while (n > 0 && starts[n] > start) n--;
       var at = start - starts[n];
-      if (at < 0 || at >= nodes[n].textContent.length) continue;
+      if (at < 0 || at > nodes[n].textContent.length) continue; // at the very end: after the node
       var rest = at > 0 ? nodes[n].splitText(at) : nodes[n];
       var span = document.createElement('span');
       span.className = 'hoshi-face';
@@ -108,11 +108,10 @@ window.hoshiWordColors = {
     style.textContent = dark
       ? '::highlight(hoshi-word-u){color:#FF6B6B}::highlight(hoshi-word-d){color:#7CC47F}::highlight(hoshi-word-b){color:#6FA8FF}'
       : '::highlight(hoshi-word-u){color:#D32F2F}::highlight(hoshi-word-d){color:#2E7D32}::highlight(hoshi-word-b){color:#1565C0}';
-    var vertical = window.hoshiReader.isVertical && window.hoshiReader.isVertical();
-    style.textContent += '.hoshi-face{display:inline!important;position:relative!important;margin:0!important;padding:0!important}'
-      + '.hoshi-face>img{position:absolute!important;width:.9em!important;height:.9em!important;max-width:none!important;'
-      + 'min-width:0!important;margin:0!important;border-radius:50%;object-fit:cover;object-position:top;pointer-events:none;'
-      + (vertical ? 'right:100%;top:.05em}' : 'top:100%;left:.05em}');
+    style.textContent += '.hoshi-face{display:inline-block!important;width:1em!important;height:1em!important;margin:0!important;'
+      + 'padding:0!important;vertical-align:middle!important;line-height:0!important}'
+      + '.hoshi-face>img{display:block!important;width:1em!important;height:1em!important;max-width:none!important;'
+      + 'min-width:0!important;margin:0!important;border-radius:50%;object-fit:cover;object-position:top;pointer-events:none}';
     document.head.appendChild(style);
     // Highlight wrapping moves text nodes and breaks live ranges: repaint after each rebuild (the text is unchanged).
     var self = this;
