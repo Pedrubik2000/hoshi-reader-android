@@ -110,9 +110,9 @@ window.hoshiWordColors = {
       : '::highlight(hoshi-word-u){color:#D32F2F}::highlight(hoshi-word-d){color:#2E7D32}::highlight(hoshi-word-b){color:#1565C0}';
     var vertical = window.hoshiReader.isVertical && window.hoshiReader.isVertical();
     style.textContent += '.hoshi-face{display:inline!important;position:relative!important;margin:0!important;padding:0!important}'
-      + '.hoshi-face>img{position:absolute!important;width:.62em!important;height:.62em!important;max-width:none!important;'
+      + '.hoshi-face>img{position:absolute!important;width:.9em!important;height:.9em!important;max-width:none!important;'
       + 'min-width:0!important;margin:0!important;border-radius:50%;object-fit:cover;object-position:top;pointer-events:none;'
-      + (vertical ? 'right:100%;top:.19em}' : 'top:100%;left:.19em}');
+      + (vertical ? 'right:100%;top:.05em}' : 'top:100%;left:.05em}');
     document.head.appendChild(style);
     // Highlight wrapping moves text nodes and breaks live ranges: repaint after each rebuild (the text is unchanged).
     var self = this;
