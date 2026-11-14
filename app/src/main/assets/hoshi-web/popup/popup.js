@@ -2229,6 +2229,33 @@ function createEntryHeader(entry, idx) {
     return header;
 }
 
+// ponytail: picture dictionaries by their titles (kumapie-server's shrink_dict.py output); a title list in Settings if more come.
+const PICTURE_DICTIONARY = /素材辞典|TMW Club|ビジュアル大辞典/;
+
+/**
+ * The first picture a picture dictionary has for the entry, shown over the definitions (as kumapie's popup; the
+ * dictionary order and the mined card stay as they are). A tap shows it whole. Null when there is none.
+ */
+function createTopPicture(glossaries) {
+    const find = (node) => {
+        if (Array.isArray(node)) { for (const n of node) { const f = find(n); if (f) return f; } return null; }
+        if (!node || typeof node !== 'object') return null;
+        // Not a letter drawn as an image (EPWING gaiji: sized in em).
+        if (node.tag === 'img' && typeof node.path === 'string' && node.sizeUnits !== 'em') return node.path;
+        return find(node.content);
+    };
+    for (const g of glossaries) {
+        if (!PICTURE_DICTIONARY.test(g.dictionary)) continue;
+        let path = null;
+        try { path = find(JSON.parse(g.content)); } catch { /* plain text: no picture */ }
+        if (!path) continue;
+        const img = el('img', { className: 'top-picture', src: getDictionaryMediaUrl(g.dictionary, path) });
+        img.addEventListener('click', () => img.classList.toggle('whole'));
+        return img;
+    }
+    return null;
+}
+
 function createGlossarySection(dictName, contents, isFirst, entryIdx) {
     const details = el('details', { className: 'glossary-group' });
     const collapsed = window.collapseMode === 'Collapse All'
@@ -2637,7 +2664,7 @@ function popupEventTarget(event) {
 }
 
 function isPopupInteractiveTapTarget(target) {
-    if (target?.closest('#search-text, summary, a, button, .button-slot, .deinflection-tag, .frequency-group, .pitch-group, .overlay, .overlay-close, .overlay-content')) {
+    if (target?.closest('#search-text, summary, a, button, .top-picture, .button-slot, .deinflection-tag, .frequency-group, .pitch-group, .overlay, .overlay-close, .overlay-content')) {
         return true;
     }
     const tagRow = target?.closest('.tag-row');
@@ -2797,6 +2824,9 @@ window.renderPopup = function() {
                     termTags: g.termTags
                 });
             });
+
+            const topPicture = createTopPicture(entry.glossaries);
+            if (topPicture) entryDiv.appendChild(topPicture);
 
             const dictNames = Object.keys(grouped);
             for (let dictIdx = 0; dictIdx < dictNames.length; dictIdx++) {

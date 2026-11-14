@@ -400,6 +400,19 @@ a {
     font-size: 1em;
 }
 
+.top-picture {
+    display: block;
+    max-width: 100%;
+    max-height: 240px;
+    border-radius: 8px;
+    margin: 6px auto 2px;
+}
+
+.top-picture.whole {
+    width: 100%;
+    max-height: none;
+}
+
 .glossary-group {
     position: relative;
     margin-top: 5px;
