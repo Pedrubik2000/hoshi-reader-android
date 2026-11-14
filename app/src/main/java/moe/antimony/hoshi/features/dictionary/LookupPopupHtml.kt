@@ -191,6 +191,7 @@ internal object LookupPopupHtml {
                             duplicateCheck: { postMessage: function(values) { return window.HoshiAndroidPopup.requestMessage('duplicateCheck', values); } },
                             showNotes: { postMessage: function(content) { return window.HoshiAndroidPopup.requestMessage('showNotes', content); } },
                             kumapie: { postMessage: function(content) { return window.HoshiAndroidPopup.requestMessage('kumapie', content); } },
+                            aiSense: { postMessage: function(content) { return window.HoshiAndroidPopup.requestMessage('aiSense', content); } },
                             getEntry: { postMessage: function(index) { return window.HoshiAndroidPopup.requestMessage('getEntry', index); } },
                             lookupRedirect: { postMessage: function(query) { return window.HoshiAndroidPopup.requestMessage('lookupRedirect', query); } },
                             sourceHistoryRestored: { postMessage: function(offset) { window.HoshiAndroidPopup.postMessage('sourceHistoryRestored', { sentenceOffset: offset }); } },

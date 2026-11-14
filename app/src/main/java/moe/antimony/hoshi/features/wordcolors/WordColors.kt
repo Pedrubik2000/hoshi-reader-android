@@ -91,6 +91,22 @@ internal object WordColors {
             if (out.containsKey("undone")) put("undone", out.getBoolean("undone"))
         }.toString()
     }.onFailure { Log.w("WordColors", "kumapie call failed", it) }.getOrDefault("null")
+
+    /**
+     * The popup's AI sense box: [bodyJson] `{word, reading, check}` plus the tapped [sentence] go to kumapie's provider
+     * `call` "sense"; its `json` answer is passed on as is (blocks on a PC request: never on the UI thread).
+     */
+    fun aiSense(context: Context, bodyJson: String, sentence: String): String = runCatching {
+        val body = JSONObject(bodyJson)
+        val extras = android.os.Bundle().apply {
+            putString("word", body.optString("word"))
+            putString("reading", body.optString("reading"))
+            putString("sentence", sentence)
+            putBoolean("check", body.optBoolean("check"))
+        }
+        context.contentResolver.call(Uri.parse("content://$Authority"), "sense", null, extras)?.getString("json")
+            ?: "{\"error\":true}"
+    }.onFailure { Log.w("WordColors", "kumapie sense failed", it) }.getOrDefault("{\"error\":true}")
 }
 
 /**

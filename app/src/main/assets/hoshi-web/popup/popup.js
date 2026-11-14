@@ -2014,6 +2014,48 @@ async function kumapieRequest(body) {
     }
 }
 
+// The AI sense box (kumapie's "sense" call): asked first whether this word gets one, then shown with the vote's result.
+// Hosts that don't answer 'aiSense' leave the check pending: no box.
+async function aiSenseRequest(body) {
+    try {
+        return await window.webkit?.messageHandlers?.aiSense?.postMessage(body); // the host passes the reply as an object
+    } catch {
+        return { error: true };
+    }
+}
+
+async function appendAiSense(entryDiv, entry, generation) {
+    if (!window.webkit?.messageHandlers?.aiSense) return;
+    const word = { word: entry.expression, reading: entry.reading || '' };
+    if (!(await aiSenseRequest({ ...word, check: true }))?.pick) return;
+    if (generation !== renderGeneration) return;
+    const box = el('div', { className: 'ai-sense' });
+    box.style.cssText = 'border-left:3px solid #7bc47f;background:rgba(123,196,127,.10);border-radius:6px;padding:6px 10px;margin:0 0 10px';
+    const dim = (text) => {
+        const s = document.createElement('span');
+        s.style.opacity = '.7';
+        s.textContent = text;
+        box.replaceChildren(s);
+    };
+    dim('AI: picking the meaning in this line…');
+    // Above the picture and the dictionary sections (the header and tags are already in).
+    entryDiv.insertBefore(box, entryDiv.querySelector('.top-picture, .glossary-group'));
+    const reply = await aiSenseRequest({ ...word, check: false });
+    if (generation !== renderGeneration || !box.isConnected) return;
+    if (!reply || reply.error) return dim("AI: couldn't ask the PC.");
+    if (!reply.sense) return dim('AI: no clear meaning in this line.');
+    const check = document.createElement('b');
+    check.textContent = '✓';
+    const parts = [check, ` ${reply.sense.es || ''}`, document.createElement('br'), reply.sense.ja || ''];
+    for (const ex of (reply.sense.ex || []).slice(0, 2)) {
+        const s = document.createElement('span');
+        s.style.opacity = '.7';
+        s.textContent = ex;
+        parts.push(document.createElement('br'), s);
+    }
+    box.replaceChildren(...parts);
+}
+
 async function appendKumapieRatings(entryDiv, entry) {
     if (!window.webkit?.messageHandlers?.kumapie) return;
     const word = { word: entry.expression, reading: entry.reading || '' };
@@ -2664,7 +2706,7 @@ function popupEventTarget(event) {
 }
 
 function isPopupInteractiveTapTarget(target) {
-    if (target?.closest('#search-text, summary, a, button, .top-picture, .button-slot, .deinflection-tag, .frequency-group, .pitch-group, .overlay, .overlay-close, .overlay-content')) {
+    if (target?.closest('#search-text, summary, a, button, .top-picture, .ai-sense, .button-slot, .deinflection-tag, .frequency-group, .pitch-group, .overlay, .overlay-close, .overlay-content')) {
         return true;
     }
     const tagRow = target?.closest('.tag-row');
@@ -2824,6 +2866,8 @@ window.renderPopup = function() {
                     termTags: g.termTags
                 });
             });
+
+            if (idx === 0) appendAiSense(entryDiv, entry, generation);
 
             const topPicture = createTopPicture(entry.glossaries);
             if (topPicture) entryDiv.appendChild(topPicture);

@@ -839,6 +839,14 @@ fun ReaderWebView(
                     }
                 }.start()
             }
+            is ReaderLookupPopupBridgeMessage.AiSense -> {
+                val appContext = context.applicationContext
+                val sentence = popupById(message.popupId)?.state?.selection?.sentence.orEmpty()
+                Thread {
+                    val reply = moe.antimony.hoshi.features.wordcolors.WordColors.aiSense(appContext, message.bodyJson, sentence)
+                    webView?.post { replyReaderPopupMessage(message.popupId, message.messageId, reply) }
+                }.start()
+            }
             is ReaderLookupPopupBridgeMessage.ShowNotes -> {
                 ankiViewModel.showNotesAsync(message.formatId, message.valuesByHandlebar) { shown ->
                     replyReaderPopupMessage(message.popupId, message.messageId ?: return@showNotesAsync, shown.toString())

@@ -253,6 +253,13 @@ internal sealed class ReaderLookupPopupBridgeMessage {
         val bodyJson: String,
     ) : ReaderLookupPopupBridgeMessage()
 
+    /** The AI sense box (WordColors.aiSense): [bodyJson] is {word, reading, check}; the sentence is added on the Kotlin side. */
+    data class AiSense(
+        override val popupId: String,
+        override val messageId: String,
+        val bodyJson: String,
+    ) : ReaderLookupPopupBridgeMessage()
+
     data class ShowNotes(
         override val popupId: String,
         override val messageId: String?,
@@ -374,6 +381,11 @@ internal sealed class ReaderLookupPopupBridgeMessage {
                     valuesByHandlebar = payload.obj("body")?.stringMap() ?: return null,
                 )
                 "kumapie" -> Kumapie(
+                    popupId = popupId,
+                    messageId = messageId ?: return null,
+                    bodyJson = payload.obj("body")?.toString() ?: return null,
+                )
+                "aiSense" -> AiSense(
                     popupId = popupId,
                     messageId = messageId ?: return null,
                     bodyJson = payload.obj("body")?.toString() ?: return null,

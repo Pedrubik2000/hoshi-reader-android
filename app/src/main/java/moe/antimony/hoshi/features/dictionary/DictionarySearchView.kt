@@ -623,6 +623,7 @@ internal fun DictionarySearchView(
             is ReaderLookupPopupBridgeMessage.SasayakiTogglePlayback,
             is ReaderLookupPopupBridgeMessage.SasayakiPlayForward,
             is ReaderLookupPopupBridgeMessage.Kumapie,
+            is ReaderLookupPopupBridgeMessage.AiSense,
             -> Unit
         }
     }
