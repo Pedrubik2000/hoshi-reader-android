@@ -103,10 +103,17 @@ window.hoshiWordColors = {
     CSS.highlights.set('hoshi-word-d', byState.d);
     CSS.highlights.set('hoshi-word-b', byState.b);
   },
-  install: function(dark) {
+  install: function(dark, eink) {
     var style = document.createElement('style');
-    style.textContent = dark
-      ? '::highlight(hoshi-word-u){color:#FF6B6B}::highlight(hoshi-word-d){color:#7CC47F}::highlight(hoshi-word-b){color:#6FA8FF}'
+    // E-ink is grey only (red/green/blue all print as the same dark grey): unknown = solid line, due = grey marker,
+    // mined = dotted line; the text stays black. ::highlight can't bold.
+    var grey = dark ? '#555' : '#c8c8c8';
+    style.textContent = eink
+      ? '::highlight(hoshi-word-u){text-decoration:underline solid 0.12em}'
+        + '::highlight(hoshi-word-d){background-color:' + grey + '}'
+        + '::highlight(hoshi-word-b){text-decoration:underline dotted 0.12em}'
+      : dark
+      ?'::highlight(hoshi-word-u){color:#FF6B6B}::highlight(hoshi-word-d){color:#7CC47F}::highlight(hoshi-word-b){color:#6FA8FF}'
       : '::highlight(hoshi-word-u){color:#D32F2F}::highlight(hoshi-word-d){color:#2E7D32}::highlight(hoshi-word-b){color:#1565C0}';
     style.textContent += '.hoshi-face{display:inline-block!important;width:1em!important;height:1em!important;margin:0!important;'
       + 'padding:0!important;vertical-align:middle!important;line-height:0!important}'
