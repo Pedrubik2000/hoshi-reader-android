@@ -935,7 +935,9 @@ private fun readerSetupScript(
     } else {
         val bg = settings.backgroundColor(systemDark)
         val dark = (bg shr 16 and 0xFF) * 299 + (bg shr 8 and 0xFF) * 587 + (bg and 0xFF) * 114 < 128_000
-        "${assets.wordColorsJs}\nwindow.hoshiWordColors.install($dark, ${settings.eInkMode});"
+        // A Boox (ONYX) is grey even with E-ink mode off. ponytail: other e-ink brands need E-ink mode on.
+        val grey = settings.eInkMode || android.os.Build.MANUFACTURER.equals("ONYX", ignoreCase = true)
+        "${assets.wordColorsJs}\nwindow.hoshiWordColors.install($dark, $grey);"
     }
     return """
         (function() {

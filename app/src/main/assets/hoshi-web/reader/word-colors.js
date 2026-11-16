@@ -105,13 +105,13 @@ window.hoshiWordColors = {
   },
   install: function(dark, eink) {
     var style = document.createElement('style');
-    // E-ink is grey only (red/green/blue all print as the same dark grey): unknown = solid line, due = grey marker,
-    // mined = dotted line; the text stays black. ::highlight can't bold.
-    var grey = dark ? '#555' : '#c8c8c8';
+    // E-ink is grey only (red/green/blue all print as the same dark grey): unknown = light grey marker (the most
+    // common, so the quietest), due = inverted, mined = grey text. Only color and background paint here: underline
+    // and -webkit-text-stroke highlights drew nothing on the Boox's WebView 157 (2026-11-15).
     style.textContent = eink
-      ? '::highlight(hoshi-word-u){text-decoration:underline solid 0.12em}'
-        + '::highlight(hoshi-word-d){background-color:' + grey + '}'
-        + '::highlight(hoshi-word-b){text-decoration:underline dotted 0.12em}'
+      ? '::highlight(hoshi-word-u){background-color:' + (dark ? '#555' : '#d0d0d0') + '}'
+        + '::highlight(hoshi-word-d){background-color:' + (dark ? '#fff' : '#000') + ';color:' + (dark ? '#000' : '#fff') + '}'
+        + '::highlight(hoshi-word-b){color:' + (dark ? '#999' : '#808080') + '}'
       : dark
       ?'::highlight(hoshi-word-u){color:#FF6B6B}::highlight(hoshi-word-d){color:#7CC47F}::highlight(hoshi-word-b){color:#6FA8FF}'
       : '::highlight(hoshi-word-u){color:#D32F2F}::highlight(hoshi-word-d){color:#2E7D32}::highlight(hoshi-word-b){color:#1565C0}';
