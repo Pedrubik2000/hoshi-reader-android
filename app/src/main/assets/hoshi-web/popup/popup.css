@@ -674,3 +674,9 @@ html[data-hoshi-eink-mode="true"] .pronunciation-nasal-indicator {
 .kumapie-rate:disabled { opacity: 0.5; }
 .kumapie-undo { border: 0; background: none; color: var(--accent-color); font-size: 14px; }
 .kumapie-said { color: var(--text-color-light3); font-size: 13px; }
+
+/* kumapie's "Mark known" (popup.js appendKumapieMark): outlined, filled once known. The label carries the state (e-ink). */
+.kumapie-mark { border: 1px solid currentColor; border-radius: 8px; padding: 3px 8px; background: none; color: var(--text-color); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.kumapie-mark[data-marked="yes"] { border-color: #7CC47F; background: #7CC47F; color: #1E1B26; }
+.kumapie-mark:disabled { opacity: 0.5; }
+html[data-hoshi-eink-mode="true"] .kumapie-mark[data-marked="yes"] { border-color: #000; background: #000; color: #fff; }

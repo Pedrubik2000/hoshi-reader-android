@@ -2107,6 +2107,31 @@ async function appendKumapieRatings(entryDiv, entry) {
     buttons();
 }
 
+// kumapie's "marked known" (as in its own popup and chimahon): "Mark known" on any word, "Known ✓" unmarks it; the page
+// recolours after the call (ReaderWebView). [matched] (the page's text, e.g. となり for 隣) goes along: kumapie colours by
+// the word as it splits the page, so it marks that one too. No button when kumapie's state has no `marked` (older kumapie).
+async function appendKumapieMark(buttonsContainer, entry) {
+    if (!window.webkit?.messageHandlers?.kumapie) return;
+    const word = { word: entry.expression, reading: entry.reading || '', text: entry.matched || '' };
+    const reply = await kumapieRequest({ action: 'state', ...word });
+    if (typeof reply?.marked !== 'boolean') return;
+    const button = el('button', { className: 'kumapie-mark' });
+    const show = (marked) => {
+        button.dataset.marked = marked ? 'yes' : 'no';
+        button.textContent = marked ? 'Known ✓' : 'Mark known';
+    };
+    show(reply.marked);
+    button.addEventListener('click', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        const answer = await kumapieRequest({ action: 'mark', ...word, known: button.dataset.marked !== 'yes' });
+        if (typeof answer?.marked === 'boolean') show(answer.marked);
+        button.disabled = false;
+    });
+    buttonsContainer.prepend(button);
+}
+
 async function mineEntryAtIndex(entryIndex, formatId, buttonsContainer = null) {
     const entry = window.lookupEntries?.[entryIndex];
     if (!entry) { return; }
@@ -2261,6 +2286,7 @@ function createEntryHeader(entry, idx) {
 
     appendAnkiFormatButtons(buttonsContainer, idx);
     refreshAnkiDuplicateStates(idx, buttonsContainer);
+    appendKumapieMark(buttonsContainer, entry);
 
     if (window.audioSources?.length) {
         buttonsContainer.appendChild(createButtonSlot('audio', idx));

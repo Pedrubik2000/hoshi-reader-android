@@ -63,8 +63,9 @@ internal object WordColors {
     }
 
     /**
-     * The popup's kumapie rating row: [bodyJson] `{action, word, reading, ease?, ms?, rated?}` goes to kumapie's provider
-     * `call` ("state", "rate", "undo", "reload"); answers `{state?, rated?: {notes, cards, undo}, undone?}`, or `null`
+     * The popup's kumapie rating row and "Mark known": [bodyJson] `{action, word, reading, text?, ease?, ms?, known?, rated?}`
+     * goes to kumapie's provider `call` ("state", "rate", "undo", "reload", "mark"); answers
+     * `{state?, marked?, rated?: {notes, cards, undo}, undone?}`, or `null`
      * when kumapie can't (not installed, no permission).
      */
     fun kumapie(context: Context, bodyJson: String): String = runCatching {
@@ -73,6 +74,8 @@ internal object WordColors {
             putString("word", body.optString("word"))
             putString("reading", body.optString("reading"))
             putInt("ease", body.optInt("ease"))
+            putString("text", body.optString("text"))
+            putBoolean("known", body.optBoolean("known"))
             putLong("ms", body.optLong("ms"))
             body.optJSONObject("rated")?.let { r ->
                 val notes = r.getJSONArray("notes")
@@ -89,6 +92,7 @@ internal object WordColors {
                 put("rated", JSONObject().put("notes", JSONArray(notes.toList())).put("cards", out.getInt("cards")).put("undo", out.getString("undo")))
             }
             if (out.containsKey("undone")) put("undone", out.getBoolean("undone"))
+            if (out.containsKey("marked")) put("marked", out.getBoolean("marked"))
         }.toString()
     }.onFailure { Log.w("WordColors", "kumapie call failed", it) }.getOrDefault("null")
 
