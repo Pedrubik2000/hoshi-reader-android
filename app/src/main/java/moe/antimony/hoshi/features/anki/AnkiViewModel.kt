@@ -265,7 +265,12 @@ internal class AnkiViewModel @Inject constructor(
                 it.updateCardFormat(formatId) { format -> format.copy(
                     selectedNoteTypeId = noteType.id,
                     selectedNoteTypeName = noteType.name,
-                    fieldMappings = AnkiFieldTemplates.applyDefaultsIfUnmapped(noteType, format.fieldMappings),
+                    // A different note type: the old type's mappings don't apply, so its template (if any) wins.
+                    fieldMappings = if (noteType.id != format.selectedNoteTypeId && AnkiFieldTemplates.matches(noteType)) {
+                        AnkiFieldTemplates.defaultMappings(noteType)
+                    } else {
+                        AnkiFieldTemplates.applyDefaultsIfUnmapped(noteType, format.fieldMappings)
+                    },
                 ) }.copy(
                     availableNoteTypes = (it.availableNoteTypes + noteType).distinctBy(AnkiNoteType::id),
                 )
