@@ -252,17 +252,20 @@ internal class AnkiRepository(
                 .let(::normalizeAnkiDictionaryHtml)
         }.filterValues { it.isNotBlank() }
 
+        val tags = AnkiHandlebarRenderer.renderTags(
+            template = format.tags,
+            payload = mediaPayload,
+            context = mediaContext,
+            selectedGlossaryFallback = settings.selectedGlossaryFallback,
+            termDictionaries = termDictionaries,
+        ).split(Regex("\\s+")).filter { it.isNotBlank() }.toSet()
+        // kumapie keeps the Mined decks' cards of its person (kumapie's own Anki): there first, else Anki as before.
+        moe.antimony.hoshi.features.wordcolors.WordColors.mine(this@AnkiRepository.context, deck.name, fields, tags)?.let { return@withContext it }
         val added = activeBackend.addNote(
             deck = deck,
             noteType = noteType,
             fieldsByName = fields,
-            tags = AnkiHandlebarRenderer.renderTags(
-                template = format.tags,
-                payload = mediaPayload,
-                context = mediaContext,
-                selectedGlossaryFallback = settings.selectedGlossaryFallback,
-                termDictionaries = termDictionaries,
-            ).split(Regex("\\s+")).filter { it.isNotBlank() }.toSet(),
+            tags = tags,
             allowDupes = settings.allowDupes,
             duplicateScope = settings.duplicateScope,
             checkDuplicatesAcrossAllModels = settings.checkDuplicatesAcrossAllModels,

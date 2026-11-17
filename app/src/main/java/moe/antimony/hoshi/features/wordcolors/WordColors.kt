@@ -57,6 +57,20 @@ internal object WordColors {
             .onFailure { Log.w("WordColors", "kumapie split failed", it) }
     }
 
+    /**
+     * A card for [deck] goes to kumapie first: kumapie keeps the Mined decks' cards of a person it has them for (its
+     * own Anki, text only). True = kumapie took it; null = not kumapie's (another deck, or kumapie absent or not set
+     * up for it): the caller adds it to Anki as before.
+     */
+    fun mine(context: Context, deck: String, fields: Map<String, String>, tags: Set<String>): Boolean? = runCatching {
+        val extras = android.os.Bundle().apply {
+            putString("deck", deck)
+            putString("fields", JSONObject(fields).toString())
+            putString("tags", tags.joinToString(" "))
+        }
+        context.contentResolver.call(Uri.parse("content://$Authority"), "mine", null, extras)?.takeIf { it.containsKey("note") }?.let { true }
+    }.onFailure { Log.w("Hoshi", "kumapie mine: $it") }.getOrNull()
+
     /** Loads kumapie's splitter (~7 s when its process is cold) before a book asks for colours. */
     fun warmUp(context: Context) {
         Thread { runCatching { runs(context, "日本語") } }.start()
