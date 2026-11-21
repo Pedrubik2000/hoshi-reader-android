@@ -57,6 +57,7 @@ import moe.antimony.hoshi.features.sasayaki.SasayakiSettings
 import moe.antimony.hoshi.features.settings.AdvancedSettingsView
 import moe.antimony.hoshi.features.statistics.StatisticsView
 import moe.antimony.hoshi.features.statistics.StatisticsSettingsView
+import moe.antimony.hoshi.features.yuurei.YuureiView
 import moe.antimony.hoshi.features.statistics.StatisticsBookView
 import moe.antimony.hoshi.features.update.AboutScreen
 import kotlinx.coroutines.launch
@@ -276,6 +277,7 @@ fun AppShell(
                     onOpenReader = ::openReader,
                     bookshelfRefreshKey = bookshelfRefreshKey,
                     dictionaryFocusRequestKey = dictionaryFocusRequestKey,
+                    onOpenYuurei = { booksBackStack.add(AppRoute.YuureiRoute) },
                 )
                 AppRoute.DictionaryRoute -> TopLevelRouteContent(
                     selectedTab = MainTab.Dictionary,
@@ -326,6 +328,7 @@ fun AppShell(
                     },
                 )
                 AppRoute.StatisticsSettingsRoute -> StatisticsSettingsView(onClose = ::popRoute)
+                AppRoute.YuureiRoute -> YuureiView(onClose = ::popRoute)
                 is AppRoute.StatisticsBookRoute -> StatisticsBookView(folder = route.folder, onClose = ::popRoute)
                 is AppRoute.SettingsDetailRoute -> SettingsDetailDestination(
                     route = route,
@@ -471,6 +474,7 @@ private fun TopLevelRouteContent(
     onSettingsDestination: (SettingsDestination) -> Unit = {},
     onOpenStatisticsSettings: () -> Unit = {},
     onOpenBookStatistics: (String) -> Unit = {},
+    onOpenYuurei: () -> Unit = {},
 ) {
     val layoutSpec = currentMainShellLayoutSpec()
     when (selectedTab) {
@@ -478,6 +482,7 @@ private fun TopLevelRouteContent(
             pendingImportUri = pendingImportUri,
             onPendingImportConsumed = onPendingImportConsumed,
             onOpenReader = onOpenReader,
+            onOpenYuurei = onOpenYuurei,
             refreshKey = bookshelfRefreshKey,
             layoutSpec = layoutSpec,
             modifier = Modifier.fillMaxSize(),
@@ -592,7 +597,7 @@ internal fun nextDictionaryFocusRequestKey(
     }
 
 private fun AppRoute.toMainTab(): MainTab = when (this) {
-    AppRoute.MainRoute, AppRoute.BooksRoute -> MainTab.Books
+    AppRoute.MainRoute, AppRoute.BooksRoute, AppRoute.YuureiRoute -> MainTab.Books
     AppRoute.DictionaryRoute -> MainTab.Dictionary
     AppRoute.StatisticsRoute, AppRoute.StatisticsSettingsRoute, is AppRoute.StatisticsBookRoute -> MainTab.Statistics
     AppRoute.SettingsRoute -> MainTab.Settings

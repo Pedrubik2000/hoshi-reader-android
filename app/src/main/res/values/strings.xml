@@ -125,6 +125,10 @@
     <string name="bookshelf_import_failed_list_format" comment="Bookshelf batch import failure summary; intentionally matches the dictionary batch import format.">Failed to import:\n%1$s</string>
     <string name="bookshelf_import_files">Import files</string>
     <string name="bookshelf_import_folder">Import folder</string>
+    <string name="yuurei_title" translatable="false">Yuurei</string>
+    <string name="yuurei_imported_format">Imported %1$s</string>
+    <string name="yuurei_epub_only">Only EPUB books from Yuurei can be imported.</string>
+    <string name="yuurei_download_failed">Couldn’t download the book. Tap Download again to retry.</string>
     <string name="bookshelf_scanning_folder">Scanning folder...</string>
     <string name="bookshelf_no_epub_files_found">No EPUB files found.</string>
     <string name="bookshelf_importing_epub">Importing EPUB...</string>

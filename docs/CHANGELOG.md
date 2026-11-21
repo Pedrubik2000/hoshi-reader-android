@@ -6,6 +6,10 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
 
 ## [Unreleased]
 
+### Added
+
+- Browse yuurei.moe from the library "+" menu and import an EPUB with the site's own Download button.
+
 ## [v1.4.0] - 2026-09-24
 
 ### Added

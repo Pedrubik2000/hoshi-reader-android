@@ -160,6 +160,7 @@ fun BookshelfView(
     refreshKey: Int = 0,
     layoutSpec: MainShellLayoutSpec,
     modifier: Modifier = Modifier,
+    onOpenYuurei: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val appContainer = LocalHoshiUiDependencies.current
@@ -325,6 +326,7 @@ fun BookshelfView(
         onManageShelves = { showShelfManagement = true },
         onImportFiles = ::launchBookImporter,
         onImportFolder = ::launchBookFolderImporter,
+        onOpenYuurei = onOpenYuurei,
         onOpenBook = booksViewModel::openBook,
         onRefreshRemoteBooks = booksViewModel::refreshRemoteBooks,
         onImportRemoteBook = { entry ->
@@ -896,6 +898,7 @@ private fun BooksTab(
     onManageShelves: () -> Unit,
     onImportFiles: () -> Unit,
     onImportFolder: () -> Unit,
+    onOpenYuurei: () -> Unit,
     onOpenBook: (BookEntry) -> Unit,
     onRefreshRemoteBooks: () -> Unit,
     onImportRemoteBook: (RemoteBookEntry) -> Unit,
@@ -942,6 +945,7 @@ private fun BooksTab(
                 onManageShelves = onManageShelves,
                 onImportFiles = onImportFiles,
                 onImportFolder = onImportFolder,
+                onOpenYuurei = onOpenYuurei,
             )
         },
     ) { innerPadding ->
@@ -1189,6 +1193,7 @@ private fun BooksTopAppBar(
     onManageShelves: () -> Unit,
     onImportFiles: () -> Unit,
     onImportFolder: () -> Unit,
+    onOpenYuurei: () -> Unit,
 ) {
     var moveMenuExpanded by remember { mutableStateOf(false) }
     var importMenuExpanded by remember { mutableStateOf(false) }
@@ -1332,6 +1337,13 @@ private fun BooksTopAppBar(
                             onClick = {
                                 importMenuExpanded = false
                                 onImportFolder()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.yuurei_title)) },
+                            onClick = {
+                                importMenuExpanded = false
+                                onOpenYuurei()
                             },
                         )
                     }

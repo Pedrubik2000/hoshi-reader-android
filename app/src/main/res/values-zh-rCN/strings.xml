@@ -123,6 +123,10 @@
     <string name="bookshelf_import_failed_list_format" comment="Bookshelf batch import failure summary; intentionally matches the dictionary batch import format.">导入失败：\n%1$s</string>
     <string name="bookshelf_import_files">导入文件</string>
     <string name="bookshelf_import_folder">导入文件夹</string>
+    <string name="yuurei_title" translatable="false">Yuurei</string>
+    <string name="yuurei_imported_format">已导入 %1$s</string>
+    <string name="yuurei_epub_only">只能导入来自 Yuurei 的 EPUB 书籍。</string>
+    <string name="yuurei_download_failed">无法下载此书。请再次点按“下载”重试。</string>
     <string name="bookshelf_scanning_folder">正在扫描文件夹...</string>
     <string name="bookshelf_no_epub_files_found">未找到 EPUB 文件。</string>
     <string name="bookshelf_importing_epub">正在导入 EPUB...</string>
