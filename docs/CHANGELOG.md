@@ -10,6 +10,10 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
 
 - Browse yuurei.moe from the library "+" menu and import an EPUB with the site's own Download button.
 
+### Changed
+
+- The update check reads this fork's releases, so it no longer offers the upstream app.
+
 ## [v1.4.0] - 2026-09-24
 
 ### Added
