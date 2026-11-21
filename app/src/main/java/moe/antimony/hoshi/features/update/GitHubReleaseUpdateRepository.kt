@@ -200,7 +200,7 @@ internal class GitHubReleaseUpdateRepository private constructor(
 
     companion object {
         const val LatestReleaseUrl =
-            "https://api.github.com/repos/HuangAntimony/Hoshi-Reader-Android/releases/latest"
+            "https://api.github.com/repos/Pedrubik2000/hoshi-reader-android/releases/latest"
     }
 }
 

@@ -40,7 +40,12 @@ internal class UpdateCheckService @Inject constructor(
         notifyAvailable: Boolean = false,
     ): UpdateCheckOutcome {
         val release = releaseRepository.latestRelease()
-        val releaseVersion = AppVersion.parse(release.tagName) ?: return UpdateCheckOutcome.NoInstallableAsset
+        val releaseVersion = AppVersion.parse(release.tagName) ?: run {
+            // Fork releases are tagged by date, not version: drop a prompt left over from an upstream release.
+            // ponytail: no in-app updates from the fork; give its releases comparable versions if that is wanted.
+            updateStore.clear()
+            return UpdateCheckOutcome.NoInstallableAsset
+        }
         val currentVersion = AppVersion.parse(currentVersionName) ?: return UpdateCheckOutcome.UpToDate
         if (releaseVersion <= currentVersion) return UpdateCheckOutcome.UpToDate
         val update = release.availableUpdateOrNull(currentVersionName) ?: return UpdateCheckOutcome.NoInstallableAsset
